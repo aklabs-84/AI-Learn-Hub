@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Institution": {
+      "title": "Institution",
+      "description": "학습 자료를 제공하는 교육 기관 (학교, 기관, 기업)",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "기관 이름"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["school", "organization", "corporation"],
+          "description": "기관 유형"
+        },
+        "description": {
+          "type": "string",
+          "description": "기관 설명"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "등록 일시"
+        }
+      },
+      "required": ["name", "type"]
+    },
+    "Resource": {
+      "title": "Learning Resource",
+      "description": "AI 학습 자료 상세 정보",
+      "type": "object",
+      "properties": {
+        "institutionId": {
+          "type": "string",
+          "description": "소속 기관 ID"
+        },
+        "title": {
+          "type": "string",
+          "description": "자료 제목"
+        },
+        "description": {
+          "type": "string",
+          "description": "자료 요약 설명"
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "format": "url",
+          "description": "썸네일 이미지 URL"
+        },
+        "guideUrl": {
+          "type": "string",
+          "format": "url",
+          "description": "학습 가이드 페이지 URL"
+        },
+        "password": {
+          "type": "string",
+          "description": "접근을 위한 영문/숫자 6자리 비밀번호"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "등록 일시"
+        }
+      },
+      "required": ["institutionId", "title", "password"]
+    }
+  },
+  "firestore": {
+    "/institutions/{institutionId}": {
+      "schema": "Institution",
+      "description": "기관 목록"
+    },
+    "/resources/{resourceId}": {
+      "schema": "Resource",
+      "description": "학습 자료 목록"
+    }
+  }
+}

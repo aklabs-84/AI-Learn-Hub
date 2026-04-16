@@ -1,0 +1,124 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: institutions
+// Document ID: auto-generated
+// Fields:
+//   - name: string (required) - 기관 이름
+//   - type: string (required) - [school, organization, corporation]
+//   - description: string (optional) - 기관 설명
+//   - createdAt: timestamp (required) - 등록 일시
+//
+// Collection: resources
+// Document ID: auto-generated
+// Fields:
+//   - institutionId: string (required) - 소속 기관 ID
+//   - title: string (required) - 자료 제목
+//   - description: string (optional) - 자료 요약 설명
+//   - thumbnailUrl: string (optional) - 썸네일 이미지 URL
+//   - guideUrl: string (required) - 학습 가이드 페이지 URL
+//   - password: string (required) - 6자리 영문/숫자 비밀번호
+//   - createdAt: timestamp (required) - 등록 일시
+//
+// Collection: users
+// Document ID: userId (auth.uid)
+// Fields:
+//   - email: string (required)
+//   - role: string (required) - [admin, user]
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "mosebb@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // User Profile Rules
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasOnly(['email', 'role', 'createdAt']) &&
+               data.email is string && isValidEmail(data.email) &&
+               data.role in ['admin', 'user'] &&
+               data.createdAt is timestamp;
+      }
+
+      allow read: if isOwner(userId) || isAdmin();
+      // Only allow root admin to promote others to admin
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    // Institution Rules
+    match /institutions/{institutionId} {
+      function isValidInstitution(data) {
+        let allowedFields = ['name', 'type', 'description', 'createdAt'];
+        return data.keys().hasOnly(allowedFields) &&
+               data.keys().hasAll(['name', 'type', 'createdAt']) &&
+               data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+               data.type in ['school', 'organization', 'corporation'] &&
+               data.createdAt is timestamp &&
+               (!('description' in data) || (data.description is string && data.description.size() <= 1000));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && isValidInstitution(request.resource.data);
+      allow update: if isAdmin() && isValidInstitution(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Resource Rules
+    match /resources/{resourceId} {
+      function isValidResource(data) {
+        let allowedFields = ['institutionId', 'title', 'description', 'thumbnailUrl', 'guideUrl', 'password', 'passwordHash', 'createdAt', 'updatedAt'];
+        let requiredFields = ['institutionId', 'title', 'guideUrl', 'password', 'passwordHash'];
+        
+        return data.keys().hasOnly(allowedFields) &&
+               data.keys().hasAll(requiredFields) &&
+               data.institutionId is string &&
+               data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+               isValidUrl(data.guideUrl) &&
+               data.password is string && data.password.matches("^[a-zA-Z0-9]{6}$") &&
+               (!('createdAt' in data) || data.createdAt is timestamp) &&
+               (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+               (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+               (!('thumbnailUrl' in data) || isValidUrl(data.thumbnailUrl));
+      }
+
+      allow read: if true;
+      allow create: if isAdmin() && isValidResource(request.resource.data) && ('createdAt' in request.resource.data);
+      allow update: if isAdmin() && isValidResource(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}
