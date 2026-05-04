@@ -17,9 +17,9 @@ export function Navbar() {
     { name: '학습 자료실', icon: Library, href: '/', active: pathname === '/' },
     ...(role === 'admin' ? [
       { name: '학습 자료 관리', icon: LayoutDashboard, href: '/admin', active: pathname === '/admin' },
+      { name: '사용 통계', icon: BarChart3, href: '/admin/statistics', active: pathname === '/admin/statistics' },
       { name: '참여 기관 관리', icon: Building2, href: '#', active: false },
       { name: '접근 권한 설정', icon: ShieldCheck, href: '#', active: false },
-      { name: '사용 통계', icon: BarChart3, href: '#', active: false },
     ] : [])
   ];
 

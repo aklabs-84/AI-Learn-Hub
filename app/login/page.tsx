@@ -33,7 +33,13 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
     } catch (err: any) {
       console.error(err);
-      setError('로그인 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      if (err.code === 'auth/unauthorized-domain') {
+        setError('현재 도메인이 Firebase 승인 도메인 목록에 없습니다. Firebase 콘솔에서 현재 URL을 추가해 주세요.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해 주세요.');
+      } else {
+        setError(`로그인 중 오류가 발생했습니다 (${err.code || 'Unknown Error'}). 다시 시도해 주세요.`);
+      }
     } finally {
       setIsSigningIn(false);
     }

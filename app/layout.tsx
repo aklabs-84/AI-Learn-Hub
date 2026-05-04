@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang="ko" className={`${inter.variable} ${outfit.variable}`} suppressHydrationWarning>
       <body suppressHydrationWarning className="bg-bg-main text-text-main font-sans antialiased min-h-screen">
         <ErrorBoundary>
           <FirebaseProvider>

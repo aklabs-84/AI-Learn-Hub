@@ -33,6 +33,7 @@ function ResourceThumbnail({ url }: { url?: string }) {
       src={url} 
       alt="" 
       fill 
+      unoptimized={url.includes('notion.so')}
       className="object-cover" 
       referrerPolicy="no-referrer"
       onError={() => setError(true)}
@@ -56,6 +57,7 @@ export default function AdminDashboard() {
   const [resGuideUrl, setResGuideUrl] = useState('');
   const [resThumbUrl, setResThumbUrl] = useState('');
   const [resPassword, setResPassword] = useState('');
+  const [isResPasswordProtected, setIsResPasswordProtected] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,7 +100,9 @@ export default function AdminDashboard() {
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resTitle || !resInstId || !resGuideUrl || !resPassword) return;
+    if (!resTitle || !resInstId || !resGuideUrl) return;
+    if (isResPasswordProtected && !resPassword) return;
+
     setIsSubmitting(true);
     try {
       const resourceData = {
@@ -107,8 +111,9 @@ export default function AdminDashboard() {
         institutionId: resInstId,
         guideUrl: resGuideUrl,
         thumbnailUrl: resThumbUrl,
-        passwordHash: resPassword,
-        password: resPassword,
+        passwordHash: isResPasswordProtected ? resPassword : '',
+        password: isResPasswordProtected ? resPassword : '',
+        isPasswordProtected: isResPasswordProtected,
         updatedAt: serverTimestamp(),
       };
 
@@ -137,7 +142,8 @@ export default function AdminDashboard() {
     setResInstId(res.institutionId);
     setResGuideUrl(res.guideUrl);
     setResThumbUrl(res.thumbnailUrl || '');
-    setResPassword(res.password);
+    setResPassword(res.password || '');
+    setIsResPasswordProtected(res.isPasswordProtected !== false); // Default to true if undefined
     // Scroll to form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -247,18 +253,22 @@ export default function AdminDashboard() {
               <div>
                 <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1.5 ml-1">기관 이름</label>
                 <input
+                  id="inst-name-input"
                   type="text"
                   placeholder="예: 미래창의고등학교"
                   value={instName}
                   onChange={(e) => setInstName(e.target.value)}
+                  suppressHydrationWarning
                   className="w-full px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all"
                 />
               </div>
               <div>
                 <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1.5 ml-1">기관 유형</label>
                 <select
+                  id="inst-type-select"
                   value={instType}
                   onChange={(e) => setInstType(e.target.value)}
+                  suppressHydrationWarning
                   className="w-full px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all appearance-none"
                 >
                   <option value="school">학교</option>
@@ -310,10 +320,12 @@ export default function AdminDashboard() {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">자료 제목</label>
                 <input
+                  id="res-title-input"
                   type="text"
                   placeholder="예: ChatGPT 실무 입문"
                   value={resTitle}
                   onChange={(e) => setResTitle(e.target.value)}
+                  suppressHydrationWarning
                   className="w-full px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all"
                 />
               </div>
@@ -321,8 +333,10 @@ export default function AdminDashboard() {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">담당 기관</label>
                 <select
+                  id="res-inst-select"
                   value={resInstId}
                   onChange={(e) => setResInstId(e.target.value)}
+                  suppressHydrationWarning
                   className="w-full px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all"
                 >
                   <option value="">Choose Institution...</option>
@@ -335,9 +349,11 @@ export default function AdminDashboard() {
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">요약 설명</label>
                 <textarea
+                  id="res-desc-textarea"
                   placeholder="Learning guide summary..."
                   value={resDesc}
                   onChange={(e) => setResDesc(e.target.value)}
+                  suppressHydrationWarning
                   className="w-full px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all h-20 resize-none"
                 />
               </div>
@@ -345,10 +361,12 @@ export default function AdminDashboard() {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">가이드 URL</label>
                 <input
+                  id="res-guide-url-input"
                   type="url"
                   placeholder="https://..."
                   value={resGuideUrl}
                   onChange={(e) => setResGuideUrl(e.target.value)}
+                  suppressHydrationWarning
                   className="w-full px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all"
                 />
               </div>
@@ -357,10 +375,12 @@ export default function AdminDashboard() {
                 <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">썸네일 URL</label>
                 <div className="flex gap-4">
                   <input
+                    id="res-thumb-url-input"
                     type="url"
                     placeholder="https://..."
                     value={resThumbUrl}
                     onChange={(e) => setResThumbUrl(e.target.value)}
+                    suppressHydrationWarning
                     className="flex-1 px-4 py-2.5 bg-bg-main border border-border-subtle rounded-lg text-sm outline-none focus:border-brand-primary transition-all"
                   />
                   {resThumbUrl && (
@@ -376,25 +396,51 @@ export default function AdminDashboard() {
               </div>
 
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">접근 비밀번호 (6자)</label>
-                <div className="flex gap-2">
-                  <div className="flex-1 px-4 py-3 bg-bg-main border border-dashed border-brand-primary rounded-lg text-center font-mono font-bold tracking-[0.4em] text-lg text-brand-primary">
-                    {resPassword || '------'}
-                  </div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider ml-1">접근 보안 설정</label>
                   <button
                     type="button"
-                    onClick={() => setResPassword(generatePassword())}
-                    className="px-4 bg-white border border-border-subtle rounded-lg hover:bg-bg-main transition-all text-text-muted"
+                    onClick={() => setIsResPasswordProtected(!isResPasswordProtected)}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
+                      isResPasswordProtected 
+                        ? 'bg-brand-primary text-white' 
+                        : 'bg-gray-100 text-text-muted'
+                    }`}
                   >
-                    <RefreshCcw size={18} />
+                    <div className={`w-3 h-3 rounded-full border-2 border-white transition-all ${isResPasswordProtected ? 'bg-white' : 'translate-x-0 bg-gray-400'}`} />
+                    {isResPasswordProtected ? '비밀번호 사용 중' : '보안 해제됨'}
                   </button>
                 </div>
+
+                {isResPasswordProtected ? (
+                  <div className="flex gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div 
+                      id="res-password-display"
+                      suppressHydrationWarning
+                      className="flex-1 px-4 py-3 bg-bg-main border border-dashed border-brand-primary rounded-lg text-center font-mono font-bold tracking-[0.4em] text-lg text-brand-primary"
+                    >
+                      {resPassword || '------'}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setResPassword(generatePassword())}
+                      className="px-4 bg-white border border-border-subtle rounded-lg hover:bg-bg-main transition-all text-text-muted"
+                    >
+                      <RefreshCcw size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="px-4 py-4 bg-green-50 border border-green-100 rounded-lg flex items-center gap-3 text-green-700">
+                    <Info size={18} className="shrink-0" />
+                    <p className="text-xs font-medium">비밀번호 없이 누구나 클릭만으로 가이드에 접근할 수 있게 설정됩니다.</p>
+                  </div>
+                )}
               </div>
 
               <div className="md:col-span-2 pt-4 flex gap-4">
                 <button
                   type="submit"
-                  disabled={isSubmitting || !resTitle || !resInstId || !resGuideUrl || !resPassword}
+                  disabled={isSubmitting || !resTitle || !resInstId || !resGuideUrl || (isResPasswordProtected && !resPassword)}
                   className={`flex-1 py-3 ${editingId ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-50' : 'bg-brand-primary hover:bg-brand-dark shadow-blue-50'} text-white rounded-lg font-bold text-sm transition-all shadow-lg disabled:opacity-50`}
                 >
                   {editingId ? '수정 내용 저장' : '저장하기'}
@@ -428,7 +474,13 @@ export default function AdminDashboard() {
                       <p className="text-[11px] text-text-muted flex items-center gap-3">
                         <span className="font-bold text-brand-primary uppercase">{institutions.find(i => i.id === res.institutionId)?.name || 'EDUCATION'}</span>
                         <span className="flex items-center gap-1 font-mono text-brand-dark">
-                          <Key size={10} /> {res.password}
+                          {res.isPasswordProtected !== false ? (
+                            <>
+                              <Key size={10} /> {res.password}
+                            </>
+                          ) : (
+                            <span className="text-green-600 font-bold tracking-tight">OPEN ACCESS</span>
+                          )}
                         </span>
                       </p>
                     </div>
@@ -441,13 +493,15 @@ export default function AdminDashboard() {
                     >
                       <Edit size={16} />
                     </button>
-                    <button 
-                      onClick={() => setLargeDisplay({ title: res.title, password: res.password })}
-                      className="p-2 text-brand-primary hover:bg-brand-accent rounded-lg transition-all"
-                      title="크게 보기"
-                    >
-                      <Monitor size={16} />
-                    </button>
+                    {res.isPasswordProtected !== false && (
+                      <button 
+                        onClick={() => setLargeDisplay({ title: res.title, password: res.password })}
+                        className="p-2 text-brand-primary hover:bg-brand-accent rounded-lg transition-all"
+                        title="크게 보기"
+                      >
+                        <Monitor size={16} />
+                      </button>
+                    )}
                     <button 
                       onClick={() => setDeleteId({ coll: 'resources', id: res.id })}
                       className="p-2 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"

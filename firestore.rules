@@ -100,24 +100,35 @@ service cloud.firestore {
     // Resource Rules
     match /resources/{resourceId} {
       function isValidResource(data) {
-        let allowedFields = ['institutionId', 'title', 'description', 'thumbnailUrl', 'guideUrl', 'password', 'passwordHash', 'createdAt', 'updatedAt'];
-        let requiredFields = ['institutionId', 'title', 'guideUrl', 'password', 'passwordHash'];
+        let allowedFields = ['institutionId', 'title', 'description', 'thumbnailUrl', 'guideUrl', 'password', 'passwordHash', 'createdAt', 'updatedAt', 'views', 'isPasswordProtected'];
+        let requiredFields = ['institutionId', 'title', 'guideUrl'];
         
         return data.keys().hasOnly(allowedFields) &&
                data.keys().hasAll(requiredFields) &&
                data.institutionId is string &&
                data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
                isValidUrl(data.guideUrl) &&
-               data.password is string && data.password.matches("^[a-zA-Z0-9]{6}$") &&
+               (!('isPasswordProtected' in data) || data.isPasswordProtected is bool) &&
+               (
+                 (data.get('isPasswordProtected', true) == false) ||
+                 (
+                   data.get('password', '') is string && 
+                   data.get('password', '').matches("^[a-zA-Z0-9]{6}$") &&
+                   data.get('passwordHash', '') is string
+                 )
+               ) &&
                (!('createdAt' in data) || data.createdAt is timestamp) &&
                (!('updatedAt' in data) || data.updatedAt is timestamp) &&
                (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
-               (!('thumbnailUrl' in data) || isValidUrl(data.thumbnailUrl));
+               (!('thumbnailUrl' in data) || isValidUrl(data.thumbnailUrl)) &&
+               (!('views' in data) || data.views is int);
       }
 
       allow read: if true;
       allow create: if isAdmin() && isValidResource(request.resource.data) && ('createdAt' in request.resource.data);
-      allow update: if isAdmin() && isValidResource(request.resource.data);
+      allow update: if (isAdmin() && isValidResource(request.resource.data)) || 
+                     (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) && 
+                      request.resource.data.views == resource.data.get('views', 0) + 1);
       allow delete: if isAdmin();
     }
   }

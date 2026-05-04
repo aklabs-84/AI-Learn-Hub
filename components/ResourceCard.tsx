@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ExternalLink, Lock, CheckCircle2, X } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 interface ResourceCardProps {
   id: string;
@@ -13,13 +15,25 @@ interface ResourceCardProps {
   guideUrl: string;
   passwordHash: string;
   institutionName: string;
+  isPasswordProtected?: boolean;
 }
 
-export function ResourceCard({ title, description, thumbnailUrl, guideUrl, passwordHash, institutionName }: ResourceCardProps) {
+export function ResourceCard({ id, title, description, thumbnailUrl, guideUrl, passwordHash, institutionName, isPasswordProtected = true }: ResourceCardProps) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [error, setError] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  const recordView = async () => {
+    try {
+      const resDoc = doc(db, 'resources', id);
+      await updateDoc(resDoc, {
+        views: increment(1)
+      });
+    } catch (err) {
+      console.error('Failed to record view:', err);
+    }
+  };
 
   const handleVerify = () => {
     if (passwordInput === passwordHash) {
@@ -33,6 +47,15 @@ export function ResourceCard({ title, description, thumbnailUrl, guideUrl, passw
     }
   };
 
+  const handleClick = () => {
+    recordView();
+    if (isPasswordProtected) {
+      setShowPasswordModal(true);
+    } else {
+      window.open(guideUrl, '_blank');
+    }
+  };
+
   return (
     <>
       <motion.div
@@ -41,7 +64,7 @@ export function ResourceCard({ title, description, thumbnailUrl, guideUrl, passw
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -4 }}
         className="group relative bg-white border border-border-subtle rounded-xl overflow-hidden cursor-pointer shadow-subtle hover:shadow-bold transition-all duration-300 flex flex-col"
-        onClick={() => setShowPasswordModal(true)}
+        onClick={handleClick}
       >
         <div className="h-[140px] relative bg-[#e0e0e0] flex items-center justify-center overflow-hidden">
           {thumbnailUrl && !imgError ? (
@@ -49,6 +72,7 @@ export function ResourceCard({ title, description, thumbnailUrl, guideUrl, passw
               src={thumbnailUrl}
               alt={title}
               fill
+              unoptimized={thumbnailUrl.includes('notion.so')}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               referrerPolicy="no-referrer"
               onError={() => setImgError(true)}
@@ -75,10 +99,17 @@ export function ResourceCard({ title, description, thumbnailUrl, guideUrl, passw
         </div>
 
         <div className="px-4 py-3 border-t border-border-subtle flex items-center justify-between bg-white">
-          <span className="text-xs text-[#d93025] flex items-center gap-1 font-medium">
-            <Lock size={12} />
-            잠김 (비밀번호 필요)
-          </span>
+          {isPasswordProtected ? (
+            <span className="text-xs text-[#d93025] flex items-center gap-1 font-medium">
+              <Lock size={12} />
+              잠김 (비밀번호 필요)
+            </span>
+          ) : (
+            <span className="text-xs text-green-600 flex items-center gap-1 font-medium">
+              <CheckCircle2 size={12} />
+              누구나 접근 가능
+            </span>
+          )}
           <div className="px-3 py-1 border border-border-subtle rounded text-[12px] text-text-muted font-medium group-hover:bg-brand-accent group-hover:text-brand-primary group-hover:border-brand-primary transition-all">
             보기
           </div>
@@ -118,11 +149,13 @@ export function ResourceCard({ title, description, thumbnailUrl, guideUrl, passw
 
               <div className="space-y-4">
                 <input
+                  id={`password-input-${title}`}
                   type="text"
                   placeholder="비밀번호 입력"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleVerify()}
+                  suppressHydrationWarning
                   className={`w-full px-4 py-3 bg-bg-main border rounded-lg outline-none transition-all font-mono text-center text-xl tracking-[0.4em] ${
                     error ? 'border-red-500 bg-red-50 animate-shake' : 'border-border-subtle focus:border-brand-primary focus:ring-2 focus:ring-brand-accent'
                   }`}

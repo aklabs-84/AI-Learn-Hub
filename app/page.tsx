@@ -16,6 +16,7 @@ interface Resource {
   guideUrl: string;
   passwordHash: string;
   institutionId: string;
+  isPasswordProtected?: boolean;
 }
 
 interface Institution {
@@ -79,10 +80,12 @@ export default function Home() {
             <Search size={18} />
           </div>
           <input
+            id="search-resources-input"
             type="text"
             placeholder="Search resources..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            suppressHydrationWarning
             className="w-full pl-11 pr-4 py-3 bg-white border border-border-subtle rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-brand-primary shadow-sm transition-all"
           />
         </div>
@@ -111,6 +114,7 @@ export default function Home() {
                   guideUrl={resource.guideUrl}
                   passwordHash={resource.passwordHash}
                   institutionName={institutions[resource.institutionId] || '교육 기관'}
+                  isPasswordProtected={resource.isPasswordProtected}
                 />
               ))}
             </AnimatePresence>
