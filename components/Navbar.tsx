@@ -18,8 +18,8 @@ export function Navbar() {
     ...(role === 'admin' ? [
       { name: '학습 자료 관리', icon: LayoutDashboard, href: '/admin', active: pathname === '/admin' },
       { name: '사용 통계', icon: BarChart3, href: '/admin/statistics', active: pathname === '/admin/statistics' },
-      { name: '참여 기관 관리', icon: Building2, href: '#', active: false },
-      { name: '접근 권한 설정', icon: ShieldCheck, href: '#', active: false },
+      { name: '참여 기관 관리', icon: Building2, href: '/admin/institutions', active: pathname === '/admin/institutions' },
+      { name: '접근 권한 설정', icon: ShieldCheck, href: '/admin/permissions', active: pathname === '/admin/permissions' },
     ] : [])
   ];
 

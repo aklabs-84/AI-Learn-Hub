@@ -41,11 +41,14 @@
     - Updated `ResourceCard` to bypass the password modal if a resource is not protected.
 - **Outcome**: Admins can now choose whether to secure each resource with a 6-digit password or keep it open for public access.
 
-### 2. Permission Denied Error Resolution (해결사 & 상담가)
-- **Problem**: Admin was receiving "Missing or insufficient permissions" when adding resources without a thumbnail.
-- **Cause**: Security rules had a strict `isValidUrl` check that rejected empty strings, which were being sent for empty thumbnails.
-- **Solution**: Updated `firestore.rules` to allow empty strings in `isValidUrl`. Also ensured `views` are initialized to `0` upon creation.
-- **Status**: Completed.
+### 3. Sidebar & Admin Accessibility (건축가 & 작업자)
+- **Problem**: Admin menus (Institutions, Permissions) were non-functional (# links) and users reported perceived slowness in navigation.
+- **Solution**:
+    - Created functional pages for `/admin/institutions` and `/admin/permissions`.
+    - Wired up the Navbar links correctly.
+    - Verified that admin menus are only visible to `role === 'admin'`.
+    - Optimized Sidebar link logic for better performance.
+- **Outcome**: Admins can now manage institutions and view permissions, and sidebar navigation works instantly via Next.js Link prefetching.
 
 ---
 *Created by Doc (서기) for future reference.*
