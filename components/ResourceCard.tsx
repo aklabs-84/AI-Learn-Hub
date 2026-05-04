@@ -18,11 +18,14 @@ interface ResourceCardProps {
   isPasswordProtected?: boolean;
 }
 
-export function ResourceCard({ id, title, description, thumbnailUrl, guideUrl, passwordHash, institutionName, isPasswordProtected = true }: ResourceCardProps) {
+export function ResourceCard({ id, title, description, thumbnailUrl, guideUrl, passwordHash, institutionName, isPasswordProtected }: ResourceCardProps) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [error, setError] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  // isPasswordProtected가 명시적으로 false가 아니면 보안 유지 (기존 데이터 대응)
+  const isProtected = isPasswordProtected !== false;
 
   const recordView = async () => {
     try {
@@ -49,7 +52,7 @@ export function ResourceCard({ id, title, description, thumbnailUrl, guideUrl, p
 
   const handleClick = () => {
     recordView();
-    if (isPasswordProtected) {
+    if (isProtected) {
       setShowPasswordModal(true);
     } else {
       window.open(guideUrl, '_blank');
@@ -99,7 +102,7 @@ export function ResourceCard({ id, title, description, thumbnailUrl, guideUrl, p
         </div>
 
         <div className="px-4 py-3 border-t border-border-subtle flex items-center justify-between bg-white">
-          {isPasswordProtected ? (
+          {isProtected ? (
             <span className="text-xs text-[#d93025] flex items-center gap-1 font-medium">
               <Lock size={12} />
               잠김 (비밀번호 필요)
