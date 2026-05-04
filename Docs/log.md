@@ -30,7 +30,7 @@
 ### 2. Usage Statistics Planning (건축가)
 - **Status**: Design placeholder implemented. Future phases include view tracking via Firestore and a dashboard with bar charts.
 
-## [2026-05-04] Optional Password Protection Logic
+## [2026-05-04] Optional Password Protection & Permission Fixes
 
 ### 1. Resource Password Toggle (해결사 & 작업자)
 - **Problem**: Some resources needed to be public without password prompts, while others required security.
@@ -40,6 +40,12 @@
     - Implemented a toggle button in the Admin Dashboard form (Create/Edit) to enable/disable password protection.
     - Updated `ResourceCard` to bypass the password modal if a resource is not protected.
 - **Outcome**: Admins can now choose whether to secure each resource with a 6-digit password or keep it open for public access.
+
+### 2. Permission Denied Error Resolution (해결사 & 상담가)
+- **Problem**: Admin was receiving "Missing or insufficient permissions" when adding resources without a thumbnail.
+- **Cause**: Security rules had a strict `isValidUrl` check that rejected empty strings, which were being sent for empty thumbnails.
+- **Solution**: Updated `firestore.rules` to allow empty strings in `isValidUrl`. Also ensured `views` are initialized to `0` upon creation.
+- **Status**: Completed.
 
 ---
 *Created by Doc (서기) for future reference.*

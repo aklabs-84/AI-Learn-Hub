@@ -124,6 +124,7 @@ export default function AdminDashboard() {
         await addDoc(collection(db, 'resources'), {
           ...resourceData,
           createdAt: serverTimestamp(),
+          views: 0,
         });
       }
       
